@@ -151,31 +151,37 @@
         
         // Game objects data
         const gameObjects = [
-            {
-                targetSyllables: ["CA", "SA"],
-                wrongSyllablesPool: ["BO", "LA", "MA", "TO"],
-                emoji: "🏠", // House representation
-                word: "CASA"
-            },
-            {
-                targetSyllables: ["BO", "LA"],
-                wrongSyllablesPool: ["CA", "SA", "TA", "MO"],
-                emoji: "⚽", // Ball representation
-                word: "BOLA"
-            },
-            {
-                targetSyllables: ["GA", "TO"],
-                wrongSyllablesPool: ["CA", "BO", "LA", "MA"],
-                emoji: "🐱", // Cat representation
-                word: "GATO"
-            },
-            {
-                targetSyllables: ["SO", "L"],
-                wrongSyllablesPool: ["LU", "A", "CA", "TA"],
-                emoji: "☀️", // Sun representation
-                word: "SOL"
-            }
-        ];
+    { targetSyllables: ["CA", "SA"], wrongSyllablesPool: ["BO", "LA", "MA", "TO"], emoji: "🏠", word: "CASA" },
+    { targetSyllables: ["BO", "LA"], wrongSyllablesPool: ["CA", "SA", "TA", "MO"], emoji: "⚽", word: "BOLA" },
+    { targetSyllables: ["GA", "TO"], wrongSyllablesPool: ["CA", "BO", "LA", "MA"], emoji: "🐱", word: "GATO" },
+    { targetSyllables: ["SO", "L"], wrongSyllablesPool: ["LU", "A", "CA", "TA"], emoji: "☀️", word: "SOL" },
+    { targetSyllables: ["MA", "MA"], wrongSyllablesPool: ["PA", "TO", "GA", "CA"], emoji: "🍎", word: "MAMA" },
+    { targetSyllables: ["PA", "TO"], wrongSyllablesPool: ["MA", "CA", "GA", "TA"], emoji: "🦆", word: "PATO" },
+    { targetSyllables: ["CA", "BO"], wrongSyllablesPool: ["PA", "TO", "MA", "LO"], emoji: "🤠", word: "CABO" },
+    { targetSyllables: ["LU", "A"], wrongSyllablesPool: ["SO", "L", "MA", "CA"], emoji: "🌙", word: "LUA" },
+    { targetSyllables: ["PE", "IXE"], wrongSyllablesPool: ["PA", "TO", "CA", "RA"], emoji: "🐟", word: "PEIXE" },
+    { targetSyllables: ["VA", "CA"], wrongSyllablesPool: ["BO", "LO", "PA", "TO"], emoji: "🐄", word: "VACA" },
+    { targetSyllables: ["CA", "DE", "LA"], wrongSyllablesPool: ["PA", "TO", "MA", "CA"], emoji: "🐕", word: "CADELA" },
+    { targetSyllables: ["GA", "VI", "ÃO"], wrongSyllablesPool: ["PA", "LO", "RA", "MA"], emoji: "✈️", word: "GAVIÃO" },
+    { targetSyllables: ["BE", "BE"], wrongSyllablesPool: ["GA", "TO", "LU", "A"], emoji: "👶", word: "BEBÊ" },
+    { targetSyllables: ["A", "MI", "GO"], wrongSyllablesPool: ["CA", "BO", "LU", "A"], emoji: "👬", word: "AMIGO" },
+    { targetSyllables: ["PA", "PEL"], wrongSyllablesPool: ["GA", "TO", "LU", "A"], emoji: "📄", word: "PAPEL" },
+    { targetSyllables: ["LI", "VRO"], wrongSyllablesPool: ["PA", "TO", "GA", "LO"], emoji: "📘", word: "LIVRO" },
+    { targetSyllables: ["GA", "LO"], wrongSyllablesPool: ["BO", "LA", "SA", "PA"], emoji: "🐓", word: "GALO" },
+    { targetSyllables: ["CA", "FE"], wrongSyllablesPool: ["GA", "TO", "LU", "A"], emoji: "☕", word: "CAFÉ" },
+    { targetSyllables: ["MO", "CHI", "LA"], wrongSyllablesPool: ["CA", "SA", "BO", "TO"], emoji: "🎒", word: "MOCHILA" },
+    { targetSyllables: ["BO", "NE"], wrongSyllablesPool: ["LU", "A", "SO", "CA"], emoji: "🧢", word: "BONÉ" },
+    { targetSyllables: ["CA", "CHO", "RRO"], wrongSyllablesPool: ["GA", "TO", "LU", "A"], emoji: "🐶", word: "CACHORRO" },
+    { targetSyllables: ["PA", "NELA"], wrongSyllablesPool: ["CA", "FE", "GA", "TO"], emoji: "🥘", word: "PANELA" },
+    { targetSyllables: ["JA", "NE", "LA"], wrongSyllablesPool: ["CA", "SA", "LU", "A"], emoji: "🪟", word: "JANELA" },
+    { targetSyllables: ["TE", "LE", "VI", "SÃO"], wrongSyllablesPool: ["CA", "SA", "PA", "TO"], emoji: "📺", word: "TELEVISÃO" },
+    { targetSyllables: ["CA", "DER", "NO"], wrongSyllablesPool: ["PA", "TO", "LU", "A"], emoji: "📒", word: "CADERNO" },
+    { targetSyllables: ["CHI", "NE", "LO"], wrongSyllablesPool: ["BO", "LA", "MA", "TO"], emoji: "🩴", word: "CHINELO" },
+    { targetSyllables: ["RE", "LO", "GIO"], wrongSyllablesPool: ["PA", "TO", "CA", "SA"], emoji: "⌚", word: "RELÓGIO" },
+    { targetSyllables: ["GUAR", "DA", "CHU", "VA"], wrongSyllablesPool: ["LU", "A", "SO", "L"], emoji: "☂️", word: "GUARDA-CHUVA" },
+    { targetSyllables: ["ES", "CO", "LA"], wrongSyllablesPool: ["BO", "LA", "MA", "TO"], emoji: "🏫", word: "ESCOLA" },
+    { targetSyllables: ["BRA", "ÇO"], wrongSyllablesPool: ["GA", "TO", "LU", "A"], emoji: "💪", word: "BRAÇO" }
+];
         
         // Player class
         class Player {
@@ -554,8 +560,8 @@
             ctx.fillStyle = BLACK;
             const progress = currentGame.targetSyllables.slice(0, currentIndex).join('-');
             const remaining = currentGame.targetSyllables.slice(currentIndex).join('-');
-            ctx.fillText(`Coletado: ${progress}`, WIDTH / 2, 250);
-            ctx.fillText(`Próximo: ${remaining}`, WIDTH / 2, 280);
+            // ctx.fillText(`Coletado: ${progress}`, WIDTH / 2, 250);
+            // ctx.fillText(`Próximo: ${remaining}`, WIDTH / 2, 280);
         }
         
         function drawReport() {
@@ -599,7 +605,7 @@
                     if (syllable.state === 'neutral' && checkCollision(playerRect, syllable.getRect())) {
                         if (syllable.isCorrect) {
                             syllable.state = 'correct';
-                            playSyllableSound(syllable.text); // Play syllable sound
+                            // playSyllableSound(syllable.text); // Play syllable sound
                             playSuccessSound(); // Play success chime
                             setTimeout(() => {
                                 currentIndex++;
