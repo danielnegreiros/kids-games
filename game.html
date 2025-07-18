@@ -1,516 +1,650 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Jogo de Sílabas</title>
-  <style>
-    body {
-      margin: 0;
-      padding: 20px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      font-family: Arial, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-    }
-
-    .game-container {
-      background: white;
-      border-radius: 15px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-      padding: 20px;
-      text-align: center;
-    }
-
-    canvas {
-      border: 3px solid #333;
-      border-radius: 10px;
-      background: #f0f8ff;
-    }
-
-    .controls {
-      margin-top: 15px;
-      color: #333;
-    }
-
-    .controls p {
-      margin: 5px 0;
-      font-size: 14px;
-    }
-
-    h1 {
-      color: #333;
-      margin-bottom: 15px;
-      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
-    }
-  </style>
-</head>
-
-<body>
-  <div class="game-container">
-    <h1>🎮 Jogo de Sílabas</h1>
-    <canvas id="gameCanvas" width="800" height="600"></canvas>
-    <div class="controls">
-      <p><strong>Controles:</strong></p>
-      <p>← → Mover jogador | ENTER/ESPAÇO Continuar após resultado</p>
-      <p><strong>Objetivo:</strong> Colete as sílabas na ordem correta!</p>
-    </div>
-  </div>
-
-  <script>
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-
-    // Constants
-    const WIDTH = 800;
-    const HEIGHT = 600;
-
-    // Colors
-    const WHITE = '#ffffff';
-    const BLACK = '#000000';
-    const GREEN = '#00c800';
-    const BLUE = '#0000ff';
-    const RED = '#ff0000';
-    const PURPLE = '#800080';
-
-    // Game objects data
-    const gameObjects = [
-      { targetSyllables: ["CA", "SA"], wrongSyllablesPool: ["BO", "LA", "MA", "TO"], emoji: "🏠", word: "CASA" },
-      { targetSyllables: ["BO", "LA"], wrongSyllablesPool: ["CA", "SA", "TA", "MO"], emoji: "⚽", word: "BOLA" },
-      { targetSyllables: ["GA", "TO"], wrongSyllablesPool: ["CA", "BO", "LA", "MA"], emoji: "🐱", word: "GATO" },
-      { targetSyllables: ["SOL"], wrongSyllablesPool: ["LU", "A", "CA", "TA"], emoji: "☀️", word: "SOL" },
-      { targetSyllables: ["MA", "ÇÃ"], wrongSyllablesPool: ["PA", "TO", "GA", "CA"], emoji: "🍎", word: "MAÇA" },
-      { targetSyllables: ["PA", "TO"], wrongSyllablesPool: ["MA", "CA", "GA", "TA"], emoji: "🦆", word: "PATO" },
-      { targetSyllables: ["CA", "BO"], wrongSyllablesPool: ["PA", "TO", "MA", "LO"], emoji: "🤠", word: "CABO" },
-      { targetSyllables: ["LU", "A"], wrongSyllablesPool: ["SO", "L", "MA", "CA"], emoji: "🌙", word: "LUA" },
-      { targetSyllables: ["PEI", "XE"], wrongSyllablesPool: ["PA", "TO", "CA", "RA"], emoji: "🐟", word: "PEIXE" },
-      { targetSyllables: ["VA", "CA"], wrongSyllablesPool: ["BO", "LO", "PA", "TO"], emoji: "🐄", word: "VACA" },
-      { targetSyllables: ["CA", "DE", "LA"], wrongSyllablesPool: ["PA", "TO", "MA", "CA"], emoji: "🐕", word: "CADELA" },
-      { targetSyllables: ["A", "VI", "ÃO"], wrongSyllablesPool: ["PA", "LO", "RA", "MA"], emoji: "✈️", word: "AVIÃO" },
-      { targetSyllables: ["BE", "BE"], wrongSyllablesPool: ["GA", "TO", "LU", "A"], emoji: "👶", word: "BEBÊ" },
-      { targetSyllables: ["A", "MI", "GO"], wrongSyllablesPool: ["CA", "BO", "LU", "A"], emoji: "👬", word: "AMIGO" },
-      { targetSyllables: ["PA", "PEL"], wrongSyllablesPool: ["GA", "TO", "LU", "A"], emoji: "📄", word: "PAPEL" },
-      { targetSyllables: ["LI", "VRO"], wrongSyllablesPool: ["PA", "TO", "GA", "LO"], emoji: "📘", word: "LIVRO" },
-      { targetSyllables: ["GA", "LO"], wrongSyllablesPool: ["BO", "LA", "SA", "PA"], emoji: "🐓", word: "GALO" },
-      { targetSyllables: ["CA", "FE"], wrongSyllablesPool: ["GA", "TO", "LU", "A"], emoji: "☕", word: "CAFÉ" },
-      { targetSyllables: ["MO", "CHI", "LA"], wrongSyllablesPool: ["CA", "SA", "BO", "TO"], emoji: "🎒", word: "MOCHILA" },
-      { targetSyllables: ["BO", "NE"], wrongSyllablesPool: ["LU", "A", "SO", "CA"], emoji: "🧢", word: "BONÉ" },
-      { targetSyllables: ["CA", "CHO", "RRO"], wrongSyllablesPool: ["GA", "TO", "LU", "A"], emoji: "🐶", word: "CACHORRO" },
-      { targetSyllables: ["PA", "NE", "LA"], wrongSyllablesPool: ["CA", "FE", "GA", "TO"], emoji: "🥘", word: "PANELA" },
-      { targetSyllables: ["JA", "NE", "LA"], wrongSyllablesPool: ["CA", "SA", "LU", "A"], emoji: "🪟", word: "JANELA" },
-      { targetSyllables: ["TE", "LE", "VI", "SÃO"], wrongSyllablesPool: ["CA", "SA", "PA", "TO"], emoji: "📺", word: "TELEVISÃO" },
-      { targetSyllables: ["CA", "DER", "NO"], wrongSyllablesPool: ["PA", "TO", "LU", "A"], emoji: "📒", word: "CADERNO" },
-      { targetSyllables: ["CHI", "NE", "LO"], wrongSyllablesPool: ["BO", "LA", "MA", "TO"], emoji: "🩴", word: "CHINELO" },
-      { targetSyllables: ["RE", "LO", "GIO"], wrongSyllablesPool: ["PA", "TO", "CA", "SA"], emoji: "⌚", word: "RELÓGIO" },
-      { targetSyllables: ["GUAR", "DA", "CHU", "VA"], wrongSyllablesPool: ["LU", "A", "SO", "L"], emoji: "☂️", word: "GUARDA-CHUVA" },
-      { targetSyllables: ["ES", "CO", "LA"], wrongSyllablesPool: ["BO", "LA", "MA", "TO"], emoji: "🏫", word: "ESCOLA" },
-      { targetSyllables: ["BRA", "ÇO"], wrongSyllablesPool: ["GA", "TO", "LU", "A"], emoji: "💪", word: "BRAÇO" }
-    ];
-
-    // Player class
-    class Player {
-      constructor() {
-        this.x = WIDTH / 2;
-        this.y = HEIGHT - 50;
-        this.width = 80;
-        this.height = 80;
-        this.speed = 5;
-      }
-
-      update(keys) {
-        if (keys['ArrowLeft'] && this.x > 0) {
-          this.x -= this.speed;
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo de Sílabas</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            touch-action: none; /* Prevent default touch behaviors */
         }
-        if (keys['ArrowRight'] && this.x < WIDTH - this.width) {
-          this.x += this.speed;
+        
+        .game-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            padding: 20px;
+            text-align: center;
+            max-width: 100vw;
+            max-height: 100vh;
         }
-      }
-
-      draw() {
-        // Draw player as a green rounded rectangle with emoji
-        ctx.fillStyle = GREEN;
-        ctx.fillRect(this.x, this.y, this.width, this.height);
-
-        // Draw border
-        ctx.strokeStyle = BLACK;
-        ctx.lineWidth = 2;
-        ctx.strokeRect(this.x, this.y, this.width, this.height);
-
-        // Draw player emoji
-        ctx.font = '40px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillStyle = BLACK;
-        ctx.fillText('🎯', this.x + this.width / 2, this.y + this.height / 2 + 15);
-      }
-
-      getRect() {
-        return {
-          x: this.x,
-          y: this.y,
-          width: this.width,
-          height: this.height
-        };
-      }
-    }
-
-    // Syllable class
-    class Syllable {
-      constructor(text, x, y, isCorrect) {
-        this.text = text;
-        this.x = x;
-        this.y = y;
-        this.width = 100;
-        this.height = 60;
-        this.speed = Math.random() * 2 + 1;
-        this.isCorrect = isCorrect;
-        this.state = 'neutral'; // 'neutral', 'correct', 'wrong'
-      }
-
-      update() {
-        this.y += this.speed;
-        if (this.y > HEIGHT) {
-          this.y = -60;
-          this.x = Math.random() * (WIDTH - 200) + 100;
+        
+        canvas {
+            border: 3px solid #333;
+            border-radius: 10px;
+            background: #f0f8ff;
+            max-width: 100%;
+            height: auto;
+            touch-action: none;
         }
-      }
-
-      draw() {
-        // Draw syllable background based on state
-        let bgColor, borderColor;
-        switch (this.state) {
-          case 'correct':
-            bgColor = '#90EE90';
-            borderColor = GREEN;
-            break;
-          case 'wrong':
-            bgColor = '#FFB6C1';
-            borderColor = RED;
-            break;
-          default: // neutral
-            bgColor = '#E8E8E8';
-            borderColor = '#888888';
+        
+        .controls {
+            margin-top: 15px;
+            color: #333;
         }
-
-        ctx.fillStyle = bgColor;
-        ctx.fillRect(this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
-
-        // Draw border
-        ctx.strokeStyle = borderColor;
-        ctx.lineWidth = 3;
-        ctx.strokeRect(this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
-
-        // Draw text
-        ctx.font = '24px Arial';
-        ctx.fillStyle = BLUE;
-        ctx.textAlign = 'center';
-        ctx.fillText(this.text, this.x, this.y + 8);
-      }
-
-      getRect() {
-        return {
-          x: this.x - this.width / 2,
-          y: this.y - this.height / 2,
-          width: this.width,
-          height: this.height
-        };
-      }
-    }
-
-    // Game state
-    let player = new Player();
-    let syllables = [];
-    let currentGame = null;
-    let currentIndex = 0;
-    let showReport = false;
-    let reportWin = true;
-    let keys = {};
-
-    // Audio context for sound synthesis
-    let audioContext = null;
-
-    // Initialize audio context (needs user interaction first)
-    function initAudio() {
-      if (!audioContext) {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      }
-    }
-
-    // Play syllable sound using text-to-speech
-    function playSyllableSound(text) {
-      if (!('speechSynthesis' in window)) return;
-
-      const RATE = 0.7;
-      const PITCH = 1.1;
-      const VOLUME = 0.9;
-
-      const speak = () => {
-        const voices = speechSynthesis.getVoices();
-        const portugueseVoice = voices.find(voice =>
-          voice.lang.toLowerCase().startsWith('pt') ||
-          voice.name.toLowerCase().includes('portuguese') ||
-          voice.name.toLowerCase().includes('brasil')
-        );
-
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.rate = RATE;
-        utterance.pitch = PITCH;
-        utterance.volume = VOLUME;
-
-        if (portugueseVoice) {
-          utterance.voice = portugueseVoice;
-          utterance.lang = portugueseVoice.lang;
-        } else {
-          console.warn("Portuguese voice not found, using default.");
-          utterance.lang = 'pt-BR';
+        
+        .controls p {
+            margin: 5px 0;
+            font-size: 14px;
         }
-
-        speechSynthesis.cancel(); // cancel overlapping
-        speechSynthesis.speak(utterance);
-      };
-
-      // Wait until voices are fully loaded
-      if (speechSynthesis.getVoices().length === 0) {
-        speechSynthesis.onvoiceschanged = () => {
-          speak();
-          // clear the listener after use
-          speechSynthesis.onvoiceschanged = null;
-        };
-      } else {
-        speak();
-      }
-    }
-
-    // Play success sound
-    function playSuccessSound() {
-      initAudio();
-      if (audioContext) {
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-
-        oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime); // C5
-        oscillator.frequency.setValueAtTime(659.25, audioContext.currentTime + 0.1); // E5
-        oscillator.frequency.setValueAtTime(783.99, audioContext.currentTime + 0.2); // G5
-
-        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.3);
-      }
-    }
-
-    // Play error sound
-    function playErrorSound() {
-      initAudio();
-      if (audioContext) {
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-
-        oscillator.frequency.setValueAtTime(220, audioContext.currentTime); // A3
-        oscillator.frequency.setValueAtTime(196, audioContext.currentTime + 0.15); // G3
-
-        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.3);
-      }
-    }
-
-    // Input handling
-    document.addEventListener('keydown', (e) => {
-      keys[e.key] = true;
-
-      // Initialize audio on first user interaction
-      initAudio();
-
-      if (showReport && (e.key === 'Enter' || e.key === ' ')) {
-        showReport = false;
-        resetForNextRound();
-      }
-    });
-
-    document.addEventListener('keyup', (e) => {
-      keys[e.key] = false;
-    });
-
-    // Game functions
-    function loadNewGameObject() {
-      currentGame = gameObjects[Math.floor(Math.random() * gameObjects.length)];
-      currentIndex = 0;
-      spawnSyllables(currentIndex);
-    }
-
-    function spawnSyllables(index) {
-      syllables = [];
-      const correct = currentGame.targetSyllables[index];
-      const wrongs = [];
-
-      // Get 2 random wrong syllables that aren't the correct one
-      const availableWrongs = currentGame.wrongSyllablesPool.filter(w => w !== correct);
-      for (let i = 0; i < 2 && i < availableWrongs.length; i++) {
-        const randomIndex = Math.floor(Math.random() * availableWrongs.length);
-        wrongs.push(availableWrongs.splice(randomIndex, 1)[0]);
-      }
-
-      const allSyllables = [...wrongs, correct];
-      // Shuffle array
-      for (let i = allSyllables.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [allSyllables[i], allSyllables[j]] = [allSyllables[j], allSyllables[i]];
-      }
-
-      const positions = [WIDTH / 4, WIDTH / 2, 3 * WIDTH / 4];
-      for (let i = 0; i < allSyllables.length; i++) {
-        syllables.push(new Syllable(allSyllables[i], positions[i], -50, allSyllables[i] === correct));
-      }
-    }
-
-    function resetForNextRound() {
-      player.x = WIDTH / 2;
-      loadNewGameObject();
-    }
-
-    function checkCollision(rect1, rect2) {
-      return rect1.x < rect2.x + rect2.width &&
-        rect1.x + rect1.width > rect2.x &&
-        rect1.y < rect2.y + rect2.height &&
-        rect1.y + rect1.height > rect2.y;
-    }
-
-    function drawBackground() {
-      // Clear canvas
-      ctx.fillStyle = WHITE;
-      ctx.fillRect(0, 0, WIDTH, HEIGHT);
-
-      // Draw some background elements
-      ctx.fillStyle = '#E6F3FF';
-      for (let i = 0; i < 5; i++) {
-        ctx.beginPath();
-        ctx.arc(Math.random() * WIDTH, Math.random() * HEIGHT, 20, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-
-    function drawGameObject() {
-      if (!currentGame) return;
-
-      // Draw the word being formed
-      ctx.font = '48px Arial';
-      ctx.fillStyle = PURPLE;
-      ctx.textAlign = 'center';
-      ctx.fillText(currentGame.word, WIDTH / 2, 80);
-
-      // Draw emoji representation
-      ctx.font = '80px Arial';
-      ctx.fillText(currentGame.emoji, WIDTH / 2, 180);
-
-      // Draw progress
-      ctx.font = '24px Arial';
-      ctx.fillStyle = BLACK;
-      const progress = currentGame.targetSyllables.slice(0, currentIndex).join('-');
-      const remaining = currentGame.targetSyllables.slice(currentIndex).join('-');
-      // ctx.fillText(`Coletado: ${progress}`, WIDTH / 2, 250);
-      // ctx.fillText(`Próximo: ${remaining}`, WIDTH / 2, 280);
-    }
-
-    function drawReport() {
-      // Semi-transparent overlay
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-      ctx.fillRect(0, 0, WIDTH, HEIGHT);
-
-      // Message
-      ctx.font = '48px Arial';
-      ctx.textAlign = 'center';
-      ctx.fillStyle = reportWin ? GREEN : RED;
-      const message = reportWin ? 'Você Acertou Tudo!' : 'Tente Novamente!';
-      ctx.fillText(message, WIDTH / 2, HEIGHT / 2);
-
-      // Hint
-      ctx.font = '24px Arial';
-      ctx.fillStyle = WHITE;
-      ctx.fillText('Pressione ENTER ou ESPAÇO', WIDTH / 2, HEIGHT / 2 + 80);
-
-      if (reportWin) {
-        ctx.font = '60px Arial';
-        ctx.fillText('🎉', WIDTH / 2, HEIGHT / 2 - 60);
-      }
-    }
-
-    function gameLoop() {
-      drawBackground();
-      drawGameObject();
-
-      if (!showReport) {
-        // Update player
-        player.update(keys);
-
-        // Update syllables
-        syllables.forEach(syllable => syllable.update());
-
-        // Check collisions
-        const playerRect = player.getRect();
-        for (let i = 0; i < syllables.length; i++) {
-          const syllable = syllables[i];
-          if (syllable.state === 'neutral' && checkCollision(playerRect, syllable.getRect())) {
-            if (syllable.isCorrect) {
-              syllable.state = 'correct';
-              playSyllableSound(syllable.text); // Play syllable sound
-              playSuccessSound(); // Play success chime
-              setTimeout(() => {
-                currentIndex++;
-                if (currentIndex === currentGame.targetSyllables.length) {
-                  reportWin = true;
-                  showReport = true;
-                } else {
-                  spawnSyllables(currentIndex);
-                }
-              }, 500); // Small delay to show the color change
-            } else {
-              syllable.state = 'wrong';
-              playErrorSound(); // Play error sound
-              setTimeout(() => {
-                reportWin = false;
-                showReport = true;
-              }, 500); // Small delay to show the color change
+        
+        h1 {
+            color: #333;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .touch-controls {
+            margin-top: 15px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+        
+        .touch-button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            user-select: none;
+            touch-action: manipulation;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .touch-button:active {
+            transform: scale(0.95);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .touch-button.left {
+            background: #2196F3;
+        }
+        
+        .touch-button.right {
+            background: #FF9800;
+        }
+        
+        @media (max-width: 768px) {
+            .game-container {
+                padding: 10px;
             }
-            break; // Only process one collision per frame
-          }
+            
+            canvas {
+                width: 100%;
+                max-width: 400px;
+                height: 300px;
+            }
+            
+            .controls p {
+                font-size: 12px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
         }
-      }
+        
+        @media (orientation: landscape) and (max-height: 500px) {
+            .game-container {
+                padding: 5px;
+            }
+            
+            h1 {
+                font-size: 20px;
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>🎮 Jogo de Sílabas</h1>
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <div class="touch-controls">
+            <button class="touch-button left" id="leftBtn">← Esquerda</button>
+            <button class="touch-button right" id="rightBtn">Direita →</button>
+        </div>
+        <div class="controls">
+            <p><strong>Controles:</strong></p>
+            <p>Desktop: ← → Mover jogador | ENTER/ESPAÇO Continuar após resultado</p>
+            <p>Tablet/Mobile: Botões de toque ou arrastar na tela</p>
+            <p><strong>Objetivo:</strong> Colete as sílabas na ordem correta!</p>
+        </div>
+    </div>
 
-      // Draw everything
-      player.draw();
-      syllables.forEach(syllable => syllable.draw());
-
-      if (showReport) {
-        drawReport();
-      }
-
-      requestAnimationFrame(gameLoop);
-    }
-
-    // Start game
-    loadNewGameObject();
-
-    // Load voices when available
-    if ('speechSynthesis' in window) {
-      speechSynthesis.addEventListener('voiceschanged', () => {
-        console.log('Voices loaded:', speechSynthesis.getVoices().length);
-      });
-    }
-
-    gameLoop();
-  </script>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Constants
+        const WIDTH = 800;
+        const HEIGHT = 600;
+        
+        // Colors
+        const WHITE = '#ffffff';
+        const BLACK = '#000000';
+        const GREEN = '#00c800';
+        const BLUE = '#0000ff';
+        const RED = '#ff0000';
+        const PURPLE = '#800080';
+        
+        // Game objects data
+        const gameObjects = [
+            {
+                targetSyllables: ["CA", "SA"],
+                wrongSyllablesPool: ["BO", "LA", "MA", "TO"],
+                emoji: "🏠", // House representation
+                word: "CASA"
+            },
+            {
+                targetSyllables: ["BO", "LA"],
+                wrongSyllablesPool: ["CA", "SA", "TA", "MO"],
+                emoji: "⚽", // Ball representation
+                word: "BOLA"
+            },
+            {
+                targetSyllables: ["GA", "TO"],
+                wrongSyllablesPool: ["CA", "BO", "LA", "MA"],
+                emoji: "🐱", // Cat representation
+                word: "GATO"
+            },
+            {
+                targetSyllables: ["SO", "L"],
+                wrongSyllablesPool: ["LU", "A", "CA", "TA"],
+                emoji: "☀️", // Sun representation
+                word: "SOL"
+            }
+        ];
+        
+        // Player class
+        class Player {
+            constructor() {
+                this.x = WIDTH / 2;
+                this.y = HEIGHT - 50;
+                this.width = 80;
+                this.height = 80;
+                this.speed = 5;
+            }
+            
+            update(keys, touchState) {
+                if ((keys['ArrowLeft'] || touchState.left) && this.x > 0) {
+                    this.x -= this.speed;
+                }
+                if ((keys['ArrowRight'] || touchState.right) && this.x < WIDTH - this.width) {
+                    this.x += this.speed;
+                }
+            }
+            
+            draw() {
+                // Draw player as a green rounded rectangle with emoji
+                ctx.fillStyle = GREEN;
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+                
+                // Draw border
+                ctx.strokeStyle = BLACK;
+                ctx.lineWidth = 2;
+                ctx.strokeRect(this.x, this.y, this.width, this.height);
+                
+                // Draw player emoji
+                ctx.font = '40px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillStyle = BLACK;
+                ctx.fillText('🎯', this.x + this.width/2, this.y + this.height/2 + 15);
+            }
+            
+            getRect() {
+                return {
+                    x: this.x,
+                    y: this.y,
+                    width: this.width,
+                    height: this.height
+                };
+            }
+        }
+        
+        // Syllable class
+        class Syllable {
+            constructor(text, x, y, isCorrect) {
+                this.text = text;
+                this.x = x;
+                this.y = y;
+                this.width = 100;
+                this.height = 60;
+                this.speed = Math.random() * 2 + 1;
+                this.isCorrect = isCorrect;
+                this.state = 'neutral'; // 'neutral', 'correct', 'wrong'
+            }
+            
+            update() {
+                this.y += this.speed;
+                if (this.y > HEIGHT) {
+                    this.y = -60;
+                    this.x = Math.random() * (WIDTH - 200) + 100;
+                }
+            }
+            
+            draw() {
+                // Draw syllable background based on state
+                let bgColor, borderColor;
+                switch(this.state) {
+                    case 'correct':
+                        bgColor = '#90EE90';
+                        borderColor = GREEN;
+                        break;
+                    case 'wrong':
+                        bgColor = '#FFB6C1';
+                        borderColor = RED;
+                        break;
+                    default: // neutral
+                        bgColor = '#E8E8E8';
+                        borderColor = '#888888';
+                }
+                
+                ctx.fillStyle = bgColor;
+                ctx.fillRect(this.x - this.width/2, this.y - this.height/2, this.width, this.height);
+                
+                // Draw border
+                ctx.strokeStyle = borderColor;
+                ctx.lineWidth = 3;
+                ctx.strokeRect(this.x - this.width/2, this.y - this.height/2, this.width, this.height);
+                
+                // Draw text
+                ctx.font = '24px Arial';
+                ctx.fillStyle = BLUE;
+                ctx.textAlign = 'center';
+                ctx.fillText(this.text, this.x, this.y + 8);
+            }
+            
+            getRect() {
+                return {
+                    x: this.x - this.width/2,
+                    y: this.y - this.height/2,
+                    width: this.width,
+                    height: this.height
+                };
+            }
+        }
+        
+        // Game state
+        let player = new Player();
+        let syllables = [];
+        let currentGame = null;
+        let currentIndex = 0;
+        let showReport = false;
+        let reportWin = true;
+        let keys = {};
+        let touchState = {
+            left: false,
+            right: false,
+            startX: 0,
+            isDragging: false
+        };
+        
+        // Audio context for sound synthesis
+        let audioContext = null;
+        
+        // Initialize audio context (needs user interaction first)
+        function initAudio() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+        
+        // Play syllable sound using text-to-speech
+        function playSyllableSound(text) {
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.rate = 0.7;
+                utterance.pitch = 1.1;
+                utterance.volume = 0.9;
+                
+                // Get Portuguese voices
+                const voices = speechSynthesis.getVoices();
+                const portugueseVoice = voices.find(voice => 
+                    voice.lang.includes('pt-BR') || 
+                    voice.lang.includes('pt') || 
+                    voice.name.toLowerCase().includes('portuguese') ||
+                    voice.name.toLowerCase().includes('brasil')
+                );
+                
+                if (portugueseVoice) {
+                    utterance.voice = portugueseVoice;
+                    utterance.lang = portugueseVoice.lang;
+                } else {
+                    utterance.lang = 'pt-BR';
+                }
+                
+                // Add small delay to ensure voices are loaded
+                setTimeout(() => {
+                    speechSynthesis.speak(utterance);
+                }, 100);
+            }
+        }
+        
+        // Play success sound
+        function playSuccessSound() {
+            initAudio();
+            if (audioContext) {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime); // C5
+                oscillator.frequency.setValueAtTime(659.25, audioContext.currentTime + 0.1); // E5
+                oscillator.frequency.setValueAtTime(783.99, audioContext.currentTime + 0.2); // G5
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.3);
+            }
+        }
+        
+        // Play error sound
+        function playErrorSound() {
+            initAudio();
+            if (audioContext) {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(220, audioContext.currentTime); // A3
+                oscillator.frequency.setValueAtTime(196, audioContext.currentTime + 0.15); // G3
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.3);
+            }
+        }
+        
+        // Input handling
+        document.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+            
+            // Initialize audio on first user interaction
+            initAudio();
+            
+            if (showReport && (e.key === 'Enter' || e.key === ' ')) {
+                showReport = false;
+                resetForNextRound();
+            }
+        });
+        
+        document.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+        });
+        
+        // Touch controls for tablets
+        const leftBtn = document.getElementById('leftBtn');
+        const rightBtn = document.getElementById('rightBtn');
+        
+        // Touch button controls
+        leftBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            touchState.left = true;
+            initAudio();
+        });
+        
+        leftBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            touchState.left = false;
+        });
+        
+        rightBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            touchState.right = true;
+            initAudio();
+        });
+        
+        rightBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            touchState.right = false;
+        });
+        
+        // Mouse controls for buttons (desktop fallback)
+        leftBtn.addEventListener('mousedown', () => touchState.left = true);
+        leftBtn.addEventListener('mouseup', () => touchState.left = false);
+        rightBtn.addEventListener('mousedown', () => touchState.right = true);
+        rightBtn.addEventListener('mouseup', () => touchState.right = false);
+        
+        // Canvas touch controls (drag to move)
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            initAudio();
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            touchState.startX = touch.clientX - rect.left;
+            touchState.isDragging = true;
+        });
+        
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (touchState.isDragging) {
+                const touch = e.touches[0];
+                const rect = canvas.getBoundingClientRect();
+                const currentX = touch.clientX - rect.left;
+                const deltaX = currentX - touchState.startX;
+                
+                // Scale touch movement to canvas coordinates
+                const scaleX = WIDTH / canvas.clientWidth;
+                player.x += deltaX * scaleX;
+                player.x = Math.max(0, Math.min(player.x, WIDTH - player.width));
+                
+                touchState.startX = currentX;
+            }
+        });
+        
+        canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            touchState.isDragging = false;
+            
+            // Handle continue on report screen
+            if (showReport) {
+                showReport = false;
+                resetForNextRound();
+            }
+        });
+        
+        // Prevent default touch behaviors
+        document.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+        }, { passive: false });
+        
+        // Game functions
+        function loadNewGameObject() {
+            currentGame = gameObjects[Math.floor(Math.random() * gameObjects.length)];
+            currentIndex = 0;
+            spawnSyllables(currentIndex);
+        }
+        
+        function spawnSyllables(index) {
+            syllables = [];
+            const correct = currentGame.targetSyllables[index];
+            const wrongs = [];
+            
+            // Get 2 random wrong syllables that aren't the correct one
+            const availableWrongs = currentGame.wrongSyllablesPool.filter(w => w !== correct);
+            for (let i = 0; i < 2 && i < availableWrongs.length; i++) {
+                const randomIndex = Math.floor(Math.random() * availableWrongs.length);
+                wrongs.push(availableWrongs.splice(randomIndex, 1)[0]);
+            }
+            
+            const allSyllables = [...wrongs, correct];
+            // Shuffle array
+            for (let i = allSyllables.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [allSyllables[i], allSyllables[j]] = [allSyllables[j], allSyllables[i]];
+            }
+            
+            const positions = [WIDTH / 4, WIDTH / 2, 3 * WIDTH / 4];
+            for (let i = 0; i < allSyllables.length; i++) {
+                syllables.push(new Syllable(allSyllables[i], positions[i], -50, allSyllables[i] === correct));
+            }
+        }
+        
+        function resetForNextRound() {
+            player.x = WIDTH / 2;
+            loadNewGameObject();
+        }
+        
+        function checkCollision(rect1, rect2) {
+            return rect1.x < rect2.x + rect2.width &&
+                   rect1.x + rect1.width > rect2.x &&
+                   rect1.y < rect2.y + rect2.height &&
+                   rect1.y + rect1.height > rect2.y;
+        }
+        
+        function drawBackground() {
+            // Clear canvas
+            ctx.fillStyle = WHITE;
+            ctx.fillRect(0, 0, WIDTH, HEIGHT);
+            
+            // Draw some background elements
+            ctx.fillStyle = '#E6F3FF';
+            for (let i = 0; i < 5; i++) {
+                ctx.beginPath();
+                ctx.arc(Math.random() * WIDTH, Math.random() * HEIGHT, 20, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        function drawGameObject() {
+            if (!currentGame) return;
+            
+            // Draw the word being formed
+            ctx.font = '48px Arial';
+            ctx.fillStyle = PURPLE;
+            ctx.textAlign = 'center';
+            ctx.fillText(currentGame.word, WIDTH / 2, 80);
+            
+            // Draw emoji representation
+            ctx.font = '80px Arial';
+            ctx.fillText(currentGame.emoji, WIDTH / 2, 180);
+            
+            // Draw progress
+            ctx.font = '24px Arial';
+            ctx.fillStyle = BLACK;
+            const progress = currentGame.targetSyllables.slice(0, currentIndex).join('-');
+            const remaining = currentGame.targetSyllables.slice(currentIndex).join('-');
+            ctx.fillText(`Coletado: ${progress}`, WIDTH / 2, 250);
+            ctx.fillText(`Próximo: ${remaining}`, WIDTH / 2, 280);
+        }
+        
+        function drawReport() {
+            // Semi-transparent overlay
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.fillRect(0, 0, WIDTH, HEIGHT);
+            
+            // Message
+            ctx.font = '48px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillStyle = reportWin ? GREEN : RED;
+            const message = reportWin ? 'Você Acertou Tudo!' : 'Tente Novamente!';
+            ctx.fillText(message, WIDTH / 2, HEIGHT / 2);
+            
+            // Hint
+            ctx.font = '24px Arial';
+            ctx.fillStyle = WHITE;
+            ctx.fillText('Pressione ENTER ou ESPAÇO', WIDTH / 2, HEIGHT / 2 + 80);
+            
+            if (reportWin) {
+                ctx.font = '60px Arial';
+                ctx.fillText('🎉', WIDTH / 2, HEIGHT / 2 - 60);
+            }
+        }
+        
+        function gameLoop() {
+            drawBackground();
+            drawGameObject();
+            
+            if (!showReport) {
+                // Update player
+                player.update(keys, touchState);
+                
+                // Update syllables
+                syllables.forEach(syllable => syllable.update());
+                
+                // Check collisions
+                const playerRect = player.getRect();
+                for (let i = 0; i < syllables.length; i++) {
+                    const syllable = syllables[i];
+                    if (syllable.state === 'neutral' && checkCollision(playerRect, syllable.getRect())) {
+                        if (syllable.isCorrect) {
+                            syllable.state = 'correct';
+                            playSyllableSound(syllable.text); // Play syllable sound
+                            playSuccessSound(); // Play success chime
+                            setTimeout(() => {
+                                currentIndex++;
+                                if (currentIndex === currentGame.targetSyllables.length) {
+                                    reportWin = true;
+                                    showReport = true;
+                                } else {
+                                    spawnSyllables(currentIndex);
+                                }
+                            }, 500); // Small delay to show the color change
+                        } else {
+                            syllable.state = 'wrong';
+                            playErrorSound(); // Play error sound
+                            setTimeout(() => {
+                                reportWin = false;
+                                showReport = true;
+                            }, 500); // Small delay to show the color change
+                        }
+                        break; // Only process one collision per frame
+                    }
+                }
+            }
+            
+            // Draw everything
+            player.draw();
+            syllables.forEach(syllable => syllable.draw());
+            
+            if (showReport) {
+                drawReport();
+            }
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Start game
+        loadNewGameObject();
+        
+        // Load voices when available
+        if ('speechSynthesis' in window) {
+            speechSynthesis.addEventListener('voiceschanged', () => {
+                console.log('Voices loaded:', speechSynthesis.getVoices().length);
+            });
+        }
+        
+        gameLoop();
+    </script>
 </body>
-
 </html>
